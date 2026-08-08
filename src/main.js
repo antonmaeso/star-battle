@@ -1,28 +1,46 @@
 import './style.css';
-import { init, GameLoop, Sprite } from 'kontra';
+import { init, GameLoop } from 'kontra';
+import { createPlayer, createPlanet } from './state/gameState.js';
+import { createGalaxySprites } from './galaxy/galaxyRenderer.js';
 
-const { canvas } = init('game-canvas');
+init('game-canvas');
 
-const placeholder = Sprite({
-  x: canvas.width / 2,
-  y: canvas.height / 2,
-  anchor: { x: 0.5, y: 0.5 },
-  color: '#aa3bff',
-  radius: 24,
-  render() {
-    this.context.beginPath();
-    this.context.arc(0, 0, this.radius, 0, Math.PI * 2);
-    this.context.fillStyle = this.color;
-    this.context.fill();
-  },
-});
+const players = [createPlayer('p1', 'Player 1'), createPlayer('p2', 'Player 2')];
+
+const planets = [
+  createPlanet({
+    id: 'alpha',
+    x: 120,
+    y: 320,
+    ownerId: 'p1',
+    ships: 30,
+    productionRate: 3,
+    isHomeworld: true,
+  }),
+  createPlanet({ id: 'beta', x: 400, y: 150, ships: 6 }),
+  createPlanet({ id: 'gamma', x: 512, y: 320, ships: 4 }),
+  createPlanet({ id: 'delta', x: 400, y: 490, ownerId: 'p1', ships: 12, productionRate: 1 }),
+  createPlanet({ id: 'epsilon', x: 620, y: 150, ownerId: 'p2', ships: 10, productionRate: 1 }),
+  createPlanet({
+    id: 'zeta',
+    x: 904,
+    y: 320,
+    ownerId: 'p2',
+    ships: 30,
+    productionRate: 3,
+    isHomeworld: true,
+  }),
+  createPlanet({ id: 'eta', x: 620, y: 490, ships: 5 }),
+];
+
+const planetSprites = createGalaxySprites(planets, players);
 
 const loop = GameLoop({
   update() {
-    placeholder.update();
+    planetSprites.forEach((sprite) => sprite.update());
   },
   render() {
-    placeholder.render();
+    planetSprites.forEach((sprite) => sprite.render());
   },
 });
 
