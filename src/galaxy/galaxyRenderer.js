@@ -43,3 +43,21 @@ export function createPlanetSprite(planet, players, selection) {
 export function createGalaxySprites(planets, players, selection) {
   return planets.map((planet) => createPlanetSprite(planet, players, selection));
 }
+
+// Only the viewing player's own fleets are drawn — an opponent's in-transit
+// fleet stays hidden until it arrives, per the galaxy phase's hidden orders.
+export function drawFleets(context, fleets, viewerPlayerId, players) {
+  fleets
+    .filter((fleet) => fleet.ownerId === viewerPlayerId)
+    .forEach((fleet) => {
+      const progress = 1 - fleet.turnsRemaining / fleet.totalTravelTurns;
+      const x = fleet.originX + (fleet.destX - fleet.originX) * progress;
+      const y = fleet.originY + (fleet.destY - fleet.originY) * progress;
+      const owner = players.find((player) => player.id === fleet.ownerId);
+
+      context.beginPath();
+      context.arc(x, y, 6, 0, Math.PI * 2);
+      context.fillStyle = owner ? owner.color : '#ffffff';
+      context.fill();
+    });
+}

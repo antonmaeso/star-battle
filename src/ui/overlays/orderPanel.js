@@ -1,7 +1,11 @@
-export function createOrderPanel({ onSubmit, onCancel, onRemove }) {
+export function createOrderPanel({ onSubmit, onCancel, onRemove, onLockIn }) {
   const root = document.createElement('div');
   root.className = 'order-panel';
   root.innerHTML = `
+    <div class="order-header">
+      <h2 class="order-player-label"></h2>
+      <p class="order-round-label"></p>
+    </div>
     <div class="order-draft" hidden>
       <p class="order-draft-route"></p>
       <label>
@@ -18,8 +22,11 @@ export function createOrderPanel({ onSubmit, onCancel, onRemove }) {
       <h3>Queued Orders</h3>
       <ul class="order-queue-list"></ul>
     </div>
+    <button type="button" class="order-lock-in">Lock In Orders</button>
   `;
 
+  const playerLabelEl = root.querySelector('.order-player-label');
+  const roundLabelEl = root.querySelector('.order-round-label');
   const draftEl = root.querySelector('.order-draft');
   const routeEl = root.querySelector('.order-draft-route');
   const countInput = root.querySelector('.order-draft-count');
@@ -30,6 +37,12 @@ export function createOrderPanel({ onSubmit, onCancel, onRemove }) {
     onSubmit(Number(countInput.value));
   });
   root.querySelector('.order-draft-cancel').addEventListener('click', () => onCancel());
+  root.querySelector('.order-lock-in').addEventListener('click', () => onLockIn());
+
+  function setHeader(playerName, round) {
+    playerLabelEl.textContent = playerName;
+    roundLabelEl.textContent = `Round ${round}`;
+  }
 
   function showDraft({ originLabel, destinationLabel, maxShips }) {
     draftEl.hidden = false;
@@ -64,5 +77,5 @@ export function createOrderPanel({ onSubmit, onCancel, onRemove }) {
     });
   }
 
-  return { root, showDraft, hideDraft, showError, renderQueue };
+  return { root, setHeader, showDraft, hideDraft, showError, renderQueue };
 }
