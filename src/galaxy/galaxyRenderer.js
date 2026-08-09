@@ -7,7 +7,7 @@ function ownerColor(planet, players) {
   return owner ? owner.color : NEUTRAL_COLOR;
 }
 
-export function createPlanetSprite(planet, players) {
+export function createPlanetSprite(planet, players, selection) {
   return Sprite({
     x: planet.x,
     y: planet.y,
@@ -21,6 +21,16 @@ export function createPlanetSprite(planet, players) {
       context.fillStyle = ownerColor(this.planet, players);
       context.fill();
 
+      if (selection?.originPlanetId === this.planet.id) {
+        context.lineWidth = 3;
+        context.strokeStyle = '#ffe066';
+        context.stroke();
+      } else if (selection?.destinationPlanetId === this.planet.id) {
+        context.lineWidth = 3;
+        context.strokeStyle = '#ffffff';
+        context.stroke();
+      }
+
       context.font = 'bold 14px system-ui, sans-serif';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
@@ -30,6 +40,6 @@ export function createPlanetSprite(planet, players) {
   });
 }
 
-export function createGalaxySprites(planets, players) {
-  return planets.map((planet) => createPlanetSprite(planet, players));
+export function createGalaxySprites(planets, players, selection) {
+  return planets.map((planet) => createPlanetSprite(planet, players, selection));
 }
