@@ -15,6 +15,14 @@ to capture more of the galaxy from your opponent. Wipe out your
 opponent's presence in the galaxy entirely — no planets and no fleets
 left — to win.
 
+Every game starts with a freshly generated galaxy — the number and
+placement of neutral planets varies from game to game. The layout is
+always mirrored, though, so both players start on opposite sides of
+the map with an identical setup: the same homeworld strength, one
+extra already-owned planet each, and matching distances to the
+nearby neutral planets. No generated map favors one side over the
+other.
+
 ## Starting the Game
 
 Before play begins, a start screen appears with a brief how-to-play
