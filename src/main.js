@@ -5,14 +5,18 @@ import { getOrders, addOrder, removeOrder, clearOrders } from './state/ordersSta
 import { validateOrder, createOrder, availableShips } from './galaxy/orders.js';
 import { createGalaxySprites, drawFleets } from './galaxy/galaxyRenderer.js';
 import { createGalaxyInput } from './galaxy/galaxyInput.js';
+import { distanceBetween, turnsForDistance } from './galaxy/distance.js';
 import { createOrderPanel } from './ui/overlays/orderPanel.js';
 import { createPassOverlay } from './ui/overlays/passDevice.js';
 import { createStateMachine, PHASE } from './state/stateMachine.js';
 import { advanceFleets, commitOrders, resolveArrivals } from './galaxy/resolution.js';
 import { createBattleDuel } from './battle/battleLoop.js';
+import { createStarfield } from './core/starfield.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from './core/constants.js';
 
 const { canvas, context } = init('game-canvas');
 const gameRoot = document.getElementById('game-root');
+const starfield = createStarfield(CANVAS_WIDTH, CANVAS_HEIGHT);
 
 const players = [createPlayer('p1', 'Player 1'), createPlayer('p2', 'Player 2')];
 const playerNames = { p1: 'Player 1', p2: 'Player 2' };
@@ -50,9 +54,9 @@ const world = {
 const planetsById = new Map(world.planets.map((planet) => [planet.id, planet]));
 const selection = { originPlanetId: null, destinationPlanetId: null };
 
-const planetSprites = createGalaxySprites(world.planets, players, selection);
-
 let activePlayerId = 'p1';
+
+const planetSprites = createGalaxySprites(world.planets, players, selection, () => activePlayerId);
 
 const stateMachine = createStateMachine(handlePhaseChange);
 
@@ -121,6 +125,7 @@ const galaxyInput = createGalaxyInput(canvas, world.planets, {
         originLabel: origin.id,
         destinationLabel: destination.id,
         maxShips: Math.max(0, availableShips(activePlayerId, origin)),
+        travelTurns: turnsForDistance(distanceBetween(origin, destination)),
       });
     } else {
       orderPanel.hideDraft();
@@ -172,6 +177,7 @@ function startNextBattle() {
   const battle = battleQueue.shift();
   activeBattle = createBattleDuel({
     context,
+    starfield,
     p1Ships: battle.p1Ships,
     p2Ships: battle.p2Ships,
     onResolved({ winnerId, survivingShips }) {
@@ -201,6 +207,7 @@ const galaxyLoop = GameLoop({
     planetSprites.forEach((sprite) => sprite.update());
   },
   render() {
+    starfield.render(context);
     planetSprites.forEach((sprite) => sprite.render());
     drawFleets(context, world.fleets, activePlayerId, players);
   },

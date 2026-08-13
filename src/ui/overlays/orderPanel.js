@@ -44,9 +44,10 @@ export function createOrderPanel({ onSubmit, onCancel, onRemove, onLockIn }) {
     roundLabelEl.textContent = `Round ${round}`;
   }
 
-  function showDraft({ originLabel, destinationLabel, maxShips }) {
+  function showDraft({ originLabel, destinationLabel, maxShips, travelTurns }) {
     draftEl.hidden = false;
-    routeEl.textContent = `${originLabel} → ${destinationLabel}`;
+    const turnsLabel = travelTurns === 1 ? '1 turn' : `${travelTurns} turns`;
+    routeEl.textContent = `${originLabel} → ${destinationLabel} (${turnsLabel})`;
     countInput.max = String(maxShips);
     countInput.value = '';
     errorEl.hidden = true;

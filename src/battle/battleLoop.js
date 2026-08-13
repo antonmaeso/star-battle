@@ -23,7 +23,7 @@ function ensureKeys() {
 // side's lives. Whoever's count hits zero first loses; the survivor's
 // remaining ships become the planet's new garrison (see resolveRound's
 // Case B in galaxy/resolution.js and the caller's onResolved handler).
-export function createBattleDuel({ context, p1Ships, p2Ships, onResolved }) {
+export function createBattleDuel({ context, p1Ships, p2Ships, onResolved, starfield }) {
   ensureKeys();
 
   const state = { shipsP1: p1Ships, shipsP2: p2Ships };
@@ -101,20 +101,40 @@ export function createBattleDuel({ context, p1Ships, p2Ships, onResolved }) {
     }
   }
 
-  function drawPaddle(paddle, color) {
+  // A small fighter-craft silhouette in place of a flat paddle rect, nosed
+  // toward the opposing side (p1 faces right, p2 faces left).
+  function drawShip(paddle, color, facing) {
+    context.save();
+    context.translate(paddle.x, paddle.y);
+    if (facing === 'left') context.scale(-1, 1);
+    context.beginPath();
+    context.moveTo(paddle.width / 2, 0);
+    context.lineTo(-paddle.width / 2, -paddle.height / 2);
+    context.lineTo(-paddle.width / 3, 0);
+    context.lineTo(-paddle.width / 2, paddle.height / 2);
+    context.closePath();
     context.fillStyle = color;
-    context.fillRect(paddle.x - paddle.width / 2, paddle.y - paddle.height / 2, paddle.width, paddle.height);
+    context.shadowColor = color;
+    context.shadowBlur = 12;
+    context.fill();
+    context.restore();
   }
 
   function render() {
-    drawPaddle(paddleP1, PLAYER_COLORS.p1);
-    drawPaddle(paddleP2, PLAYER_COLORS.p2);
+    starfield?.render(context);
+
+    drawShip(paddleP1, PLAYER_COLORS.p1, 'right');
+    drawShip(paddleP2, PLAYER_COLORS.p2, 'left');
 
     projectiles.forEach((projectile) => {
+      context.save();
+      context.shadowColor = PLAYER_COLORS[projectile.owner];
+      context.shadowBlur = 10;
       context.beginPath();
       context.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
       context.fillStyle = PLAYER_COLORS[projectile.owner];
       context.fill();
+      context.restore();
     });
 
     context.font = 'bold 20px system-ui, sans-serif';

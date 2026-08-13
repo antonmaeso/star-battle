@@ -1,4 +1,7 @@
 export const NEUTRAL_COLOR = '#6b6375';
+// Fog-of-war fill for planets owned by the other player — distinct from
+// NEUTRAL_COLOR so "unclaimed" and "enemy-owned but hidden" read differently.
+export const FOG_COLOR = '#23212b';
 
 export const PLAYER_COLORS = {
   p1: '#4a86e8',
