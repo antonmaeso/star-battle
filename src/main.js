@@ -1,11 +1,12 @@
 import './style.css';
 import { init, GameLoop } from 'kontra';
-import { createPlayer, createPlanet } from './state/gameState.js';
+import { createPlayer } from './state/gameState.js';
 import { getOrders, addOrder, removeOrder, clearOrders } from './state/ordersState.js';
 import { validateOrder, createOrder, availableShips } from './galaxy/orders.js';
 import { createGalaxySprites, drawFleets } from './galaxy/galaxyRenderer.js';
 import { createGalaxyInput } from './galaxy/galaxyInput.js';
 import { distanceBetween, turnsForDistance } from './galaxy/distance.js';
+import { generateGalaxy } from './galaxy/generateGalaxy.js';
 import { createOrderPanel } from './ui/overlays/orderPanel.js';
 import { createPassOverlay } from './ui/overlays/passDevice.js';
 import { createGameOverOverlay } from './ui/overlays/gameOver.js';
@@ -15,7 +16,7 @@ import { advanceFleets, commitOrders, resolveArrivals } from './galaxy/resolutio
 import { checkGameOver } from './galaxy/winCondition.js';
 import { createBattleDuel } from './battle/battleLoop.js';
 import { createStarfield } from './core/starfield.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from './core/constants.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, DEFAULT_STARTING_SHIPS } from './core/constants.js';
 
 const { canvas, context } = init('game-canvas');
 const gameRoot = document.getElementById('game-root');
@@ -23,39 +24,16 @@ const starfield = createStarfield(CANVAS_WIDTH, CANVAS_HEIGHT);
 
 const players = [createPlayer('p1', 'Player 1'), createPlayer('p2', 'Player 2')];
 const playerNames = { p1: 'Player 1', p2: 'Player 2' };
-const DEFAULT_STARTING_SHIPS = 30;
 
 const world = {
   round: 1,
   fleets: [],
-  planets: [
-    createPlanet({
-      id: 'alpha',
-      x: 120,
-      y: 320,
-      ownerId: 'p1',
-      ships: DEFAULT_STARTING_SHIPS,
-      resources: 3,
-      isHomeworld: true,
-    }),
-    createPlanet({ id: 'beta', x: 400, y: 150, ships: 6 }),
-    createPlanet({ id: 'gamma', x: 512, y: 320, ships: 4 }),
-    createPlanet({ id: 'delta', x: 400, y: 490, ownerId: 'p1', ships: 12, resources: 1 }),
-    createPlanet({ id: 'epsilon', x: 620, y: 150, ownerId: 'p2', ships: 10, resources: 1 }),
-    createPlanet({
-      id: 'zeta',
-      x: 904,
-      y: 320,
-      ownerId: 'p2',
-      ships: DEFAULT_STARTING_SHIPS,
-      resources: 3,
-      isHomeworld: true,
-    }),
-    createPlanet({ id: 'eta', x: 620, y: 490, ships: 5 }),
-  ],
+  planets: generateGalaxy({ homeworldShips: DEFAULT_STARTING_SHIPS }),
 };
 
 const planetsById = new Map(world.planets.map((planet) => [planet.id, planet]));
+const homeworldP1 = world.planets.find((planet) => planet.isHomeworld && planet.ownerId === 'p1');
+const homeworldP2 = world.planets.find((planet) => planet.isHomeworld && planet.ownerId === 'p2');
 const selection = { originPlanetId: null, destinationPlanetId: null };
 
 let activePlayerId = 'p1';
@@ -247,8 +225,8 @@ const splashScreen = createSplashScreen({
   defaultShipsP1: DEFAULT_STARTING_SHIPS,
   defaultShipsP2: DEFAULT_STARTING_SHIPS,
   onStart({ shipsP1, shipsP2 }) {
-    planetsById.get('alpha').ships = shipsP1;
-    planetsById.get('zeta').ships = shipsP2;
+    homeworldP1.ships = shipsP1;
+    homeworldP2.ships = shipsP2;
     gameRoot.inert = false;
     orderPanel.root.hidden = false;
     galaxyLoop.start();

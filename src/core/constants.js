@@ -23,6 +23,21 @@ export const CANVAS_DIAGONAL = Math.hypot(CANVAS_WIDTH, CANVAS_HEIGHT);
 // cap for a full corner-to-corner crossing.
 export const MAX_TRAVEL_TURNS = 10;
 
+export const DEFAULT_STARTING_SHIPS = 30;
+
+// Procedural galaxy generation (galaxy/generateGalaxy.js). The map is built
+// with 180°-point symmetry around the canvas center, so p1 and p2 always
+// start on opposite sides with an identical layout facing them.
+export const GALAXY_MARGIN = PLANET_RADIUS + 24; // keep planets off the canvas edge
+export const MIN_PLANET_SPACING = PLANET_RADIUS * 3.2;
+export const HOMEWORLD_MARGIN_X = 120; // each homeworld's distance from its canvas edge
+export const HOMEWORLD_RESOURCES = 3;
+export const SECONDARY_PLANET_RESOURCES = 1;
+export const SECONDARY_PLANET_SHIPS_RANGE = [8, 14];
+export const NEUTRAL_PLANET_PAIR_RANGE = [2, 4]; // 4-8 neutral planets total
+export const NEUTRAL_PLANET_RESOURCES_RANGE = [0, 2];
+export const NEUTRAL_PLANET_SHIPS_RANGE = [3, 8];
+
 // Battle-phase (dodge-duel) tuning.
 export const PADDLE_MARGIN = 40;
 export const PADDLE_WIDTH = 14;
