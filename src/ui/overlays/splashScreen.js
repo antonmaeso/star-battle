@@ -1,6 +1,15 @@
 import { MAX_TRAVEL_TURNS } from '../../core/constants.js';
 
-export function createSplashScreen({ defaultShipsP1, defaultShipsP2, onStart }) {
+export function createSplashScreen({
+  defaultShipsP1,
+  defaultShipsP2,
+  mapSizePresets,
+  defaultMapSize,
+  minNeutralPlanets,
+  maxNeutralPlanets,
+  defaultNeutralPlanets,
+  onStart,
+}) {
   const root = document.createElement('div');
   root.className = 'splash-overlay';
   root.innerHTML = `
@@ -26,6 +35,20 @@ export function createSplashScreen({ defaultShipsP1, defaultShipsP2, onStart }) 
           Player 2 starting ships
           <input type="number" class="splash-ships-p2" min="1" step="1" />
         </label>
+        <label>
+          Map size
+          <select class="splash-map-size"></select>
+        </label>
+        <label>
+          Neutral planets
+          <input
+            type="number"
+            class="splash-neutral-planets"
+            min="${minNeutralPlanets}"
+            max="${maxNeutralPlanets}"
+            step="1"
+          />
+        </label>
         <p class="splash-error" hidden></p>
       </div>
       <button type="button" class="splash-start">Start Game</button>
@@ -34,21 +57,45 @@ export function createSplashScreen({ defaultShipsP1, defaultShipsP2, onStart }) 
 
   const shipsP1Input = root.querySelector('.splash-ships-p1');
   const shipsP2Input = root.querySelector('.splash-ships-p2');
+  const mapSizeSelect = root.querySelector('.splash-map-size');
+  const neutralPlanetsInput = root.querySelector('.splash-neutral-planets');
   const errorEl = root.querySelector('.splash-error');
+
   shipsP1Input.value = String(defaultShipsP1);
   shipsP2Input.value = String(defaultShipsP2);
+  neutralPlanetsInput.value = String(defaultNeutralPlanets);
+
+  Object.entries(mapSizePresets).forEach(([key, preset]) => {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = `${preset.label} (${preset.width}×${preset.height})`;
+    mapSizeSelect.appendChild(option);
+  });
+  mapSizeSelect.value = defaultMapSize;
 
   root.querySelector('.splash-start').addEventListener('click', () => {
     const shipsP1 = Number(shipsP1Input.value);
     const shipsP2 = Number(shipsP2Input.value);
-    const valid = (n) => Number.isInteger(n) && n > 0;
-    if (!valid(shipsP1) || !valid(shipsP2)) {
+    const neutralPlanetCount = Number(neutralPlanetsInput.value);
+    const validShips = (n) => Number.isInteger(n) && n > 0;
+
+    if (!validShips(shipsP1) || !validShips(shipsP2)) {
       errorEl.textContent = 'Enter a whole number greater than zero for each player.';
       errorEl.hidden = false;
       return;
     }
+    if (
+      !Number.isInteger(neutralPlanetCount) ||
+      neutralPlanetCount < minNeutralPlanets ||
+      neutralPlanetCount > maxNeutralPlanets
+    ) {
+      errorEl.textContent = `Neutral planets must be between ${minNeutralPlanets} and ${maxNeutralPlanets}.`;
+      errorEl.hidden = false;
+      return;
+    }
+
     root.hidden = true;
-    onStart({ shipsP1, shipsP2 });
+    onStart({ shipsP1, shipsP2, mapSize: mapSizeSelect.value, neutralPlanetCount });
   });
 
   return { root };

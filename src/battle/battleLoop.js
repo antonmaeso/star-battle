@@ -1,6 +1,5 @@
 import { GameLoop, initKeys, keyMap, keyPressed, onKey, offKey } from 'kontra';
 import {
-  CANVAS_WIDTH,
   FIRE_COOLDOWN_MS,
   MAX_SIMULTANEOUS_SHOTS,
   PADDLE_MARGIN,
@@ -46,14 +45,14 @@ function shotCountFor(currentShips) {
   return Math.min(MAX_SIMULTANEOUS_SHOTS, 1 + extraShots);
 }
 
-export function createBattleDuel({ context, p1Ships, p2Ships, onResolved, starfield }) {
+export function createBattleDuel({ context, width, height, p1Ships, p2Ships, onResolved, starfield }) {
   ensureKeys();
 
   const state = { shipsP1: p1Ships, shipsP2: p2Ships };
   const fireCooldownP1 = fireCooldownFor(p1Ships, p2Ships);
   const fireCooldownP2 = fireCooldownFor(p2Ships, p1Ships);
-  const paddleP1 = createPaddle(PADDLE_MARGIN);
-  const paddleP2 = createPaddle(CANVAS_WIDTH - PADDLE_MARGIN);
+  const paddleP1 = createPaddle(PADDLE_MARGIN, height);
+  const paddleP2 = createPaddle(width - PADDLE_MARGIN, height);
   let projectiles = [];
   let lastFireP1 = -Infinity;
   let lastFireP2 = -Infinity;
@@ -93,15 +92,15 @@ export function createBattleDuel({ context, p1Ships, p2Ships, onResolved, starfi
     if (keyPressed('s')) paddleP1.y += PADDLE_SPEED * dt;
     if (keyPressed('arrowup')) paddleP2.y -= PADDLE_SPEED * dt;
     if (keyPressed('arrowdown')) paddleP2.y += PADDLE_SPEED * dt;
-    clampPaddleY(paddleP1);
-    clampPaddleY(paddleP2);
+    clampPaddleY(paddleP1, height);
+    clampPaddleY(paddleP2, height);
 
     projectiles.forEach((projectile) => {
       projectile.x += projectile.dx * dt;
     });
 
     projectiles = projectiles.filter((projectile) => {
-      if (isOffScreen(projectile, CANVAS_WIDTH)) return false;
+      if (isOffScreen(projectile, width)) return false;
       if (projectile.owner === 'p1' && projectileHitsPaddle(projectile, paddleP2)) {
         state.shipsP2 -= 1;
         return false;
@@ -164,7 +163,7 @@ export function createBattleDuel({ context, p1Ships, p2Ships, onResolved, starfi
     context.fillText(`P1: ${Math.max(state.shipsP1, 0)}`, 20, 30);
     context.textAlign = 'right';
     context.fillStyle = PLAYER_COLORS.p2;
-    context.fillText(`P2: ${Math.max(state.shipsP2, 0)}`, CANVAS_WIDTH - 20, 30);
+    context.fillText(`P2: ${Math.max(state.shipsP2, 0)}`, width - 20, 30);
   }
 
   const loop = GameLoop({ context, update, render });

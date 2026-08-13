@@ -13,28 +13,37 @@ export const PLANET_RADIUS = 22;
 // Ships produced per round, per point of a planet's resources.
 export const PRODUCTION_PER_RESOURCE = 1;
 
-export const CANVAS_WIDTH = 1024;
-export const CANVAS_HEIGHT = 640;
-export const CANVAS_DIAGONAL = Math.hypot(CANVAS_WIDTH, CANVAS_HEIGHT);
+// Map-size presets the player chooses on the splash screen — the galaxy
+// canvas's pixel dimensions for that game. The battle duel and starfield
+// aren't tied to a fixed size either; they take whatever the current
+// canvas dimensions are at the time they're created, so everything scales
+// with the chosen map.
+export const MAP_SIZE_PRESETS = {
+  small: { label: 'Small', width: 768, height: 480 },
+  medium: { label: 'Medium', width: 1024, height: 640 },
+  large: { label: 'Large', width: 1280, height: 800 },
+};
+export const DEFAULT_MAP_SIZE = 'medium';
 
 // A fleet's travel time scales continuously with distance, as a fraction of
-// the canvas diagonal (so it keeps scaling sensibly once the map size varies
-// with procedural generation, M5) — from 1 turn for a short hop up to this
-// cap for a full corner-to-corner crossing.
+// the current map's diagonal — from 1 turn for a short hop up to this cap
+// for a full corner-to-corner crossing, regardless of chosen map size.
 export const MAX_TRAVEL_TURNS = 10;
 
 export const DEFAULT_STARTING_SHIPS = 30;
 
 // Procedural galaxy generation (galaxy/generateGalaxy.js). The map is built
-// with 180°-point symmetry around the canvas center, so p1 and p2 always
-// start on opposite sides with an identical layout facing them.
+// with 180°-point symmetry around its center, so p1 and p2 always start on
+// opposite sides with an identical layout facing them.
 export const GALAXY_MARGIN = PLANET_RADIUS + 24; // keep planets off the canvas edge
 export const MIN_PLANET_SPACING = PLANET_RADIUS * 3.2;
 export const HOMEWORLD_MARGIN_X = 120; // each homeworld's distance from its canvas edge
 export const HOMEWORLD_RESOURCES = 3;
 export const SECONDARY_PLANET_RESOURCES = 1;
 export const SECONDARY_PLANET_SHIPS_RANGE = [8, 14];
-export const NEUTRAL_PLANET_PAIR_RANGE = [2, 4]; // 4-8 neutral planets total
+export const MIN_NEUTRAL_PLANETS = 2;
+export const MAX_NEUTRAL_PLANETS = 16;
+export const DEFAULT_NEUTRAL_PLANETS = 6;
 export const NEUTRAL_PLANET_RESOURCES_RANGE = [0, 2];
 export const NEUTRAL_PLANET_SHIPS_RANGE = [3, 8];
 

@@ -18,7 +18,7 @@ export function commitOrders(world, playerId, orders) {
   orders.forEach((order) => {
     const origin = planetsById.get(order.originPlanetId);
     origin.ships -= order.shipCount;
-    world.fleets.push(createFleetFromOrder(order, playerId, planetsById));
+    world.fleets.push(createFleetFromOrder(order, playerId, planetsById, world.mapDiagonal));
   });
 }
 

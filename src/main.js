@@ -16,29 +16,32 @@ import { advanceFleets, commitOrders, resolveArrivals } from './galaxy/resolutio
 import { checkGameOver } from './galaxy/winCondition.js';
 import { createBattleDuel } from './battle/battleLoop.js';
 import { createStarfield } from './core/starfield.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, DEFAULT_STARTING_SHIPS } from './core/constants.js';
+import {
+  DEFAULT_STARTING_SHIPS,
+  MAP_SIZE_PRESETS,
+  DEFAULT_MAP_SIZE,
+  MIN_NEUTRAL_PLANETS,
+  MAX_NEUTRAL_PLANETS,
+  DEFAULT_NEUTRAL_PLANETS,
+} from './core/constants.js';
 
 const { canvas, context } = init('game-canvas');
 const gameRoot = document.getElementById('game-root');
-const starfield = createStarfield(CANVAS_WIDTH, CANVAS_HEIGHT);
 
 const players = [createPlayer('p1', 'Player 1'), createPlayer('p2', 'Player 2')];
 const playerNames = { p1: 'Player 1', p2: 'Player 2' };
 
-const world = {
-  round: 1,
-  fleets: [],
-  planets: generateGalaxy({ homeworldShips: DEFAULT_STARTING_SHIPS }),
-};
-
-const planetsById = new Map(world.planets.map((planet) => [planet.id, planet]));
-const homeworldP1 = world.planets.find((planet) => planet.isHomeworld && planet.ownerId === 'p1');
-const homeworldP2 = world.planets.find((planet) => planet.isHomeworld && planet.ownerId === 'p2');
-const selection = { originPlanetId: null, destinationPlanetId: null };
-
+// Populated by startGame() once the splash screen's Start is clicked, since
+// the player's chosen map size and neutral-planet count determine the
+// canvas dimensions and the generated galaxy — nothing world-shaped exists
+// before that.
+let world;
+let planetsById;
+let starfield;
+let galaxyInput;
+let galaxyLoop;
 let activePlayerId = 'p1';
-
-const planetSprites = createGalaxySprites(world.planets, players, selection, () => activePlayerId);
+const selection = { originPlanetId: null, destinationPlanetId: null };
 
 const stateMachine = createStateMachine(handlePhaseChange);
 
@@ -67,8 +70,8 @@ const orderPanel = createOrderPanel({
     const phase = stateMachine.getPhase();
     if (phase === PHASE.ORDERS_P1) {
       // Advance in-transit fleets once at the top of the round, before this
-      // round's own orders are committed, so a freshly-departed fleet isn't
-      // double-decremented the same round it leaves.
+      // round's own orders are committed, so a freshly-committed fleet isn't
+      // double-decremented the same round it departs.
       advanceFleets(world);
       commitOrders(world, 'p1', getOrders('p1'));
       clearOrders('p1');
@@ -97,26 +100,6 @@ document.body.appendChild(gameOverOverlay.root);
 function refreshQueue() {
   orderPanel.renderQueue(getOrders(activePlayerId));
 }
-
-const galaxyInput = createGalaxyInput(canvas, world.planets, {
-  getActivePlayerId: () => activePlayerId,
-  onSelectionChange(nextSelection) {
-    Object.assign(selection, nextSelection);
-
-    if (selection.originPlanetId && selection.destinationPlanetId) {
-      const origin = planetsById.get(selection.originPlanetId);
-      const destination = planetsById.get(selection.destinationPlanetId);
-      orderPanel.showDraft({
-        originLabel: origin.id,
-        destinationLabel: destination.id,
-        maxShips: Math.max(0, availableShips(activePlayerId, origin)),
-        travelTurns: turnsForDistance(distanceBetween(origin, destination)),
-      });
-    } else {
-      orderPanel.hideDraft();
-    }
-  },
-});
 
 let battleQueue = [];
 let activeBattle = null;
@@ -181,6 +164,8 @@ function startNextBattle() {
   activeBattle = createBattleDuel({
     context,
     starfield,
+    width: canvas.width,
+    height: canvas.height,
     p1Ships: battle.p1Ships,
     p2Ships: battle.p2Ships,
     onResolved({ winnerId, survivingShips }) {
@@ -200,47 +185,97 @@ function startNextBattle() {
   activeBattle.start();
 }
 
-orderPanel.setHeader(playerNames.p1, world.round);
-refreshQueue();
-
-const galaxyLoop = GameLoop({
-  context,
-  update() {
-    planetSprites.forEach((sprite) => sprite.update());
-  },
-  render() {
-    starfield.render(context);
-    planetSprites.forEach((sprite) => sprite.render());
-    drawFleets(context, world.fleets, activePlayerId, players);
-  },
-});
-
-// The game stays blocked behind the splash screen until the player sets
-// each side's starting ship count and clicks Start — only then do the
-// homeworlds get their chosen ships and the galaxy loop begin.
+// The game stays blocked behind the splash screen until the player sets up
+// the match — map size, neutral planet count, and each side's starting
+// ships — and clicks Start, since those choices determine the canvas
+// dimensions and the generated galaxy.
 gameRoot.inert = true;
 orderPanel.root.hidden = true;
 
 const splashScreen = createSplashScreen({
   defaultShipsP1: DEFAULT_STARTING_SHIPS,
   defaultShipsP2: DEFAULT_STARTING_SHIPS,
-  onStart({ shipsP1, shipsP2 }) {
-    homeworldP1.ships = shipsP1;
-    homeworldP2.ships = shipsP2;
-    gameRoot.inert = false;
-    orderPanel.root.hidden = false;
-    galaxyLoop.start();
+  mapSizePresets: MAP_SIZE_PRESETS,
+  defaultMapSize: DEFAULT_MAP_SIZE,
+  minNeutralPlanets: MIN_NEUTRAL_PLANETS,
+  maxNeutralPlanets: MAX_NEUTRAL_PLANETS,
+  defaultNeutralPlanets: DEFAULT_NEUTRAL_PLANETS,
+  onStart(setup) {
+    startGame(setup);
   },
 });
 
 document.body.appendChild(splashScreen.root);
 
-if (import.meta.env.DEV) {
-  window.__game = {
-    world,
-    stateMachine,
-    PHASE,
-    getBattleQueue: () => battleQueue,
-    getActiveBattle: () => activeBattle,
+function startGame({ shipsP1, shipsP2, mapSize, neutralPlanetCount }) {
+  const { width, height } = MAP_SIZE_PRESETS[mapSize];
+  canvas.width = width;
+  canvas.height = height;
+
+  world = {
+    round: 1,
+    fleets: [],
+    mapDiagonal: Math.hypot(width, height),
+    planets: generateGalaxy({
+      width,
+      height,
+      shipsP1,
+      shipsP2,
+      neutralPlanetPairCount: Math.max(1, Math.round(neutralPlanetCount / 2)),
+    }),
   };
+  planetsById = new Map(world.planets.map((planet) => [planet.id, planet]));
+
+  starfield = createStarfield(width, height);
+
+  const planetSprites = createGalaxySprites(world.planets, players, selection, () => activePlayerId);
+
+  galaxyInput = createGalaxyInput(canvas, world.planets, {
+    getActivePlayerId: () => activePlayerId,
+    onSelectionChange(nextSelection) {
+      Object.assign(selection, nextSelection);
+
+      if (selection.originPlanetId && selection.destinationPlanetId) {
+        const origin = planetsById.get(selection.originPlanetId);
+        const destination = planetsById.get(selection.destinationPlanetId);
+        orderPanel.showDraft({
+          originLabel: origin.id,
+          destinationLabel: destination.id,
+          maxShips: Math.max(0, availableShips(activePlayerId, origin)),
+          travelTurns: turnsForDistance(distanceBetween(origin, destination), world.mapDiagonal),
+        });
+      } else {
+        orderPanel.hideDraft();
+      }
+    },
+  });
+
+  galaxyLoop = GameLoop({
+    context,
+    update() {
+      planetSprites.forEach((sprite) => sprite.update());
+    },
+    render() {
+      starfield.render(context);
+      planetSprites.forEach((sprite) => sprite.render());
+      drawFleets(context, world.fleets, activePlayerId, players);
+    },
+  });
+
+  orderPanel.setHeader(playerNames.p1, world.round);
+  refreshQueue();
+
+  gameRoot.inert = false;
+  orderPanel.root.hidden = false;
+  galaxyLoop.start();
+
+  if (import.meta.env.DEV) {
+    window.__game = {
+      world,
+      stateMachine,
+      PHASE,
+      getBattleQueue: () => battleQueue,
+      getActiveBattle: () => activeBattle,
+    };
+  }
 }
