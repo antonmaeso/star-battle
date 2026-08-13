@@ -15,6 +15,19 @@ to capture more of the galaxy from your opponent. Wipe out your
 opponent's presence in the galaxy entirely — no planets and no fleets
 left — to win.
 
+## Starting the Game
+
+Before play begins, a start screen appears with a brief how-to-play
+summary and a setup form:
+
+- Enter a starting ship count (a whole number greater than zero) for
+  each of Player 1 and Player 2's homeworld. If you leave the fields
+  as-is, a default value is used.
+- Click **Start Game** to begin. If either field is invalid, an error
+  message appears and the game doesn't start until it's fixed.
+- Once started, each player's homeworld begins with the ship count you
+  set, and the first round begins with Player 1's turn.
+
 ## Controls
 
 Each round is split into two private turns — first yours, then your
@@ -85,6 +98,11 @@ opponent's — followed by an automatic resolution step.
   cooldown and so fires faster, while the outnumbered side fires
   slower — the bigger the ship-count advantage, the bigger the speed
   difference, so numbers matter beyond just soaking up more hits.
+- The more ships your side currently has left in the fight, the more
+  shots you fire at once in each volley (a wider spread), up to a
+  cap — so a large fleet is not just faster to fire but throws more
+  shots per volley too. As you take losses during the fight, your
+  spread narrows back down along with your shrinking ship count.
 - Each shot that hits the other side's paddle costs them one ship —
   your current ship counts for the fight are shown at the top of the
   screen (Player 1's count on the left, Player 2's on the right).
@@ -119,13 +137,17 @@ opponent's — followed by an automatic resolution step.
 - Ships you send leave the origin planet as soon as you lock in your
   orders — you'll see them subtracted from that planet's ship count
   right away.
-- A fleet you send takes 1, 2, or 3 rounds to arrive, depending on how
-  far apart the two planets are — closer planets are faster to reach.
-  You can see your own fleets moving across the map as small dots in
-  your player color; your opponent's fleets stay hidden from you while
-  they're in transit and only become visible when they arrive.
+- A fleet you send takes longer to arrive the farther apart the two
+  planets are — anywhere from 1 round for a short hop up to 10 rounds
+  for the longest distances on the map. You can see your own fleets
+  moving across the map as small dots in your player color; your
+  opponent's fleets stay hidden from you while they're in transit and
+  only become visible when they arrive.
 - Each round, every planet you own produces additional ships
-  automatically, added to its ship count during resolution.
+  automatically, added to its ship count during resolution. How many
+  ships a planet produces depends on its resources — richer planets
+  produce more. A planet's resource level is shown as a small gold
+  badge on the map (planets with no resources show no badge).
 - When a fleet arrives at a planet that has no enemy ships on it
   (empty, neutral, or already yours), it captures or reinforces that
   planet — the planet's owner becomes the fleet's owner and its ship
