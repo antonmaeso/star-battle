@@ -11,11 +11,9 @@ device, taking turns "hotseat" style. You play a galaxy of planets —
 some already owned (by you or your opponent), some neutral. Each
 planet shows how many ships are stationed there. Each round, you issue
 orders to send ships from planets you own toward other planets, aiming
-to capture more of the galaxy from your opponent.
-
-The full win/lose condition for a match (what ends the game) has not
-been implemented yet — for now, rounds keep resolving one after
-another with no game-over check.
+to capture more of the galaxy from your opponent. Wipe out your
+opponent's presence in the galaxy entirely — no planets and no fleets
+left — to win.
 
 ## Controls
 
@@ -83,7 +81,10 @@ opponent's — followed by an automatic resolution step.
   - **Player 2:** `↑` / `↓` (arrow keys) to move your paddle up/down,
     `/` to fire.
 - There's a short cooldown between shots, so you can't just hold fire
-  down.
+  down. Whichever side brought more ships into the fight has a shorter
+  cooldown and so fires faster, while the outnumbered side fires
+  slower — the bigger the ship-count advantage, the bigger the speed
+  difference, so numbers matter beyond just soaking up more hits.
 - Each shot that hits the other side's paddle costs them one ship —
   your current ship counts for the fight are shown at the top of the
   screen (Player 1's count on the left, Player 2's on the right).
@@ -137,5 +138,13 @@ opponent's — followed by an automatic resolution step.
 
 ## Win / Lose Conditions
 
-_(Not yet implemented — rounds resolve automatically but there is no
-game-over check yet, so a match currently continues indefinitely.)_
+- You're eliminated once you have no planets left **and** no fleets
+  currently in transit. Losing your planets alone doesn't finish you
+  off if you still have a fleet on its way somewhere — but once that
+  fleet lands (or is lost) with nothing else left, you're out.
+- The game ends the moment only one player still has any presence
+  (planets or fleets) left in the galaxy — a "Game Over" screen
+  appears announcing that player as the winner, and the game stops
+  there.
+- If both players are eliminated at the same time, the game ends in a
+  draw, and the game-over screen shows that instead of a winner.
