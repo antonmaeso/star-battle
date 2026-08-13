@@ -10,7 +10,7 @@ export function createPlanet({
   y,
   ownerId = null,
   ships = 0,
-  productionRate = 0,
+  resources = 0,
   isHomeworld = false,
   radius = PLANET_RADIUS,
 }) {
@@ -21,7 +21,7 @@ export function createPlanet({
     radius,
     ownerId,
     ships,
-    productionRate,
+    resources,
     isHomeworld,
     pendingBattle: false,
   };

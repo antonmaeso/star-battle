@@ -2,12 +2,15 @@ import { GameLoop, initKeys, keyMap, keyPressed, onKey, offKey } from 'kontra';
 import {
   CANVAS_WIDTH,
   FIRE_COOLDOWN_MS,
+  MAX_SIMULTANEOUS_SHOTS,
   PADDLE_MARGIN,
   PADDLE_SPEED,
   PLAYER_COLORS,
   POWER_ADVANTAGE_MAX,
   PROJECTILE_RADIUS,
   PROJECTILE_SPEED,
+  PROJECTILE_SPREAD_GAP,
+  SHIPS_PER_EXTRA_SHOT,
 } from '../core/constants.js';
 import { clampPaddleY, createPaddle } from './battleEntities.js';
 import { isOffScreen, projectileHitsPaddle } from './collisions.js';
@@ -35,6 +38,14 @@ function fireCooldownFor(myShips, theirShips) {
   return FIRE_COOLDOWN_MS * (1 - advantage * POWER_ADVANTAGE_MAX);
 }
 
+// More ships currently alive means more guns firing at once, in the same
+// volley — this reads off the *current* (not starting) count, so a side's
+// spread visibly shrinks as it takes losses.
+function shotCountFor(currentShips) {
+  const extraShots = Math.floor(Math.max(0, currentShips - 1) / SHIPS_PER_EXTRA_SHOT);
+  return Math.min(MAX_SIMULTANEOUS_SHOTS, 1 + extraShots);
+}
+
 export function createBattleDuel({ context, p1Ships, p2Ships, onResolved, starfield }) {
   ensureKeys();
 
@@ -48,29 +59,25 @@ export function createBattleDuel({ context, p1Ships, p2Ships, onResolved, starfi
   let lastFireP2 = -Infinity;
   let resolved = false;
 
+  function spawnVolley(owner, x, y, dx, shotCount) {
+    const spread = (shotCount - 1) * PROJECTILE_SPREAD_GAP;
+    for (let i = 0; i < shotCount; i += 1) {
+      const offsetY = shotCount === 1 ? 0 : -spread / 2 + i * PROJECTILE_SPREAD_GAP;
+      projectiles.push({ owner, x, y: y + offsetY, dx, radius: PROJECTILE_RADIUS });
+    }
+  }
+
   function fire(owner) {
     if (resolved) return;
     const now = performance.now();
     if (owner === 'p1') {
       if (now - lastFireP1 < fireCooldownP1) return;
       lastFireP1 = now;
-      projectiles.push({
-        owner,
-        x: paddleP1.x + paddleP1.width,
-        y: paddleP1.y,
-        dx: PROJECTILE_SPEED,
-        radius: PROJECTILE_RADIUS,
-      });
+      spawnVolley('p1', paddleP1.x + paddleP1.width, paddleP1.y, PROJECTILE_SPEED, shotCountFor(state.shipsP1));
     } else {
       if (now - lastFireP2 < fireCooldownP2) return;
       lastFireP2 = now;
-      projectiles.push({
-        owner,
-        x: paddleP2.x - paddleP2.width,
-        y: paddleP2.y,
-        dx: -PROJECTILE_SPEED,
-        radius: PROJECTILE_RADIUS,
-      });
+      spawnVolley('p2', paddleP2.x - paddleP2.width, paddleP2.y, -PROJECTILE_SPEED, shotCountFor(state.shipsP2));
     }
   }
 

@@ -108,6 +108,30 @@ function drawShipCountBadge(context, radius, ships) {
   context.fillText(label, 0, badgeY + 8);
 }
 
+// A small resource-richness marker at the planet's upper-right — the stat
+// that drives its ships-per-round production (see galaxy/production.js).
+// Skipped for barren (0-resource) planets to avoid clutter.
+function drawResourceBadge(context, radius, resources) {
+  if (!resources) return;
+  const bx = radius * 0.72;
+  const by = -radius * 0.72;
+  const badgeRadius = 8;
+
+  context.beginPath();
+  context.arc(bx, by, badgeRadius, 0, Math.PI * 2);
+  context.fillStyle = 'rgba(5, 5, 15, 0.78)';
+  context.fill();
+  context.strokeStyle = 'rgba(255, 209, 102, 0.85)';
+  context.lineWidth = 1;
+  context.stroke();
+
+  context.font = 'bold 9px ui-monospace, Consolas, monospace';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillStyle = '#ffd166';
+  context.fillText(String(resources), bx, by + 1);
+}
+
 export function createPlanetSprite(planet, players, selection, getViewerPlayerId) {
   return Sprite({
     x: planet.x,
@@ -143,6 +167,7 @@ export function createPlanetSprite(planet, players, selection, getViewerPlayerId
       }
 
       drawShipCountBadge(context, radius, this.planet.ships);
+      drawResourceBadge(context, radius, this.planet.resources);
     },
   });
 }

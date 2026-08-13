@@ -9,6 +9,7 @@ import { distanceBetween, turnsForDistance } from './galaxy/distance.js';
 import { createOrderPanel } from './ui/overlays/orderPanel.js';
 import { createPassOverlay } from './ui/overlays/passDevice.js';
 import { createGameOverOverlay } from './ui/overlays/gameOver.js';
+import { createSplashScreen } from './ui/overlays/splashScreen.js';
 import { createStateMachine, PHASE } from './state/stateMachine.js';
 import { advanceFleets, commitOrders, resolveArrivals } from './galaxy/resolution.js';
 import { checkGameOver } from './galaxy/winCondition.js';
@@ -22,6 +23,7 @@ const starfield = createStarfield(CANVAS_WIDTH, CANVAS_HEIGHT);
 
 const players = [createPlayer('p1', 'Player 1'), createPlayer('p2', 'Player 2')];
 const playerNames = { p1: 'Player 1', p2: 'Player 2' };
+const DEFAULT_STARTING_SHIPS = 30;
 
 const world = {
   round: 1,
@@ -32,21 +34,21 @@ const world = {
       x: 120,
       y: 320,
       ownerId: 'p1',
-      ships: 30,
-      productionRate: 3,
+      ships: DEFAULT_STARTING_SHIPS,
+      resources: 3,
       isHomeworld: true,
     }),
     createPlanet({ id: 'beta', x: 400, y: 150, ships: 6 }),
     createPlanet({ id: 'gamma', x: 512, y: 320, ships: 4 }),
-    createPlanet({ id: 'delta', x: 400, y: 490, ownerId: 'p1', ships: 12, productionRate: 1 }),
-    createPlanet({ id: 'epsilon', x: 620, y: 150, ownerId: 'p2', ships: 10, productionRate: 1 }),
+    createPlanet({ id: 'delta', x: 400, y: 490, ownerId: 'p1', ships: 12, resources: 1 }),
+    createPlanet({ id: 'epsilon', x: 620, y: 150, ownerId: 'p2', ships: 10, resources: 1 }),
     createPlanet({
       id: 'zeta',
       x: 904,
       y: 320,
       ownerId: 'p2',
-      ships: 30,
-      productionRate: 3,
+      ships: DEFAULT_STARTING_SHIPS,
+      resources: 3,
       isHomeworld: true,
     }),
     createPlanet({ id: 'eta', x: 620, y: 490, ships: 5 }),
@@ -235,7 +237,25 @@ const galaxyLoop = GameLoop({
   },
 });
 
-galaxyLoop.start();
+// The game stays blocked behind the splash screen until the player sets
+// each side's starting ship count and clicks Start — only then do the
+// homeworlds get their chosen ships and the galaxy loop begin.
+gameRoot.inert = true;
+orderPanel.root.hidden = true;
+
+const splashScreen = createSplashScreen({
+  defaultShipsP1: DEFAULT_STARTING_SHIPS,
+  defaultShipsP2: DEFAULT_STARTING_SHIPS,
+  onStart({ shipsP1, shipsP2 }) {
+    planetsById.get('alpha').ships = shipsP1;
+    planetsById.get('zeta').ships = shipsP2;
+    gameRoot.inert = false;
+    orderPanel.root.hidden = false;
+    galaxyLoop.start();
+  },
+});
+
+document.body.appendChild(splashScreen.root);
 
 if (import.meta.env.DEV) {
   window.__game = {
