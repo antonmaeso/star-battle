@@ -25,7 +25,9 @@ opponent's — followed by an automatic resolution step.
 **During your turn:**
 
 - **Click a planet you own** to select it as the origin of a fleet
-  order. It gets a yellow outline to show it's selected.
+  order. It gets a yellow outline to show it's selected. Clicking a
+  planet you don't own does nothing while you're choosing an origin —
+  only your own planets can be selected as one.
 - **Click a different planet** to select it as the destination. It
   gets a white outline.
 - Once both an origin and a destination are selected, an order panel
@@ -59,8 +61,35 @@ opponent's — followed by an automatic resolution step.
 **Resolution:**
 
 - Once both players have locked in, the round resolves automatically
-  (see Rules below) and play continues into the next round, starting
-  again with Player 1's turn.
+  (see Rules below).
+- If the round's arrivals leave both players with ships on the same
+  planet, that planet is fought over in a real-time battle before the
+  round can finish — see "Fighting a battle" below.
+- Once resolution (and any battles) is complete, play continues into
+  the next round, starting again with Player 1's turn.
+
+**Fighting a battle:**
+
+- When a battle starts, control passes briefly to a live, real-time
+  duel that both players play at the same time on the shared screen —
+  there's no need to pass the device or hide anything, since both
+  sides' ships are already known to both players by this point.
+- Each side controls a paddle on their own edge of the screen (Player
+  1 on the left, Player 2 on the right) and fires shots across at the
+  other side:
+  - **Player 1:** `W` / `S` to move your paddle up/down, `D` to fire.
+  - **Player 2:** `↑` / `↓` (arrow keys) to move your paddle up/down,
+    `/` to fire.
+- There's a short cooldown between shots, so you can't just hold fire
+  down.
+- Each shot that hits the other side's paddle costs them one ship —
+  your current ship counts for the fight are shown at the top of the
+  screen (Player 1's count on the left, Player 2's on the right).
+- The first side whose ship count reaches zero loses the planet. The
+  other side wins it outright, and their remaining ship count becomes
+  that planet's new garrison.
+- If more than one planet has a battle to fight this round, they're
+  played one after another before the round finishes.
 
 ## Rules
 
@@ -95,11 +124,9 @@ opponent's — followed by an automatic resolution step.
   count is set to (or increased by) the arriving ships.
 - If ships from both players end up at the same planet at the end of a
   round (either already stationed there and freshly arrived, or two
-  opposing fleets arriving together), a battle happens: whichever side
-  has more ships wins the planet outright, and the winning side's
-  surviving ship count equals the difference between the two sides'
-  ship totals. If both sides have exactly equal ship counts, the
-  winner is chosen at random and 1 ship survives on the planet.
+  opposing fleets arriving together), a real-time battle is triggered
+  for that planet — see "Fighting a battle" under Controls above for
+  how it's played and decided.
 
 ## Win / Lose Conditions
 
