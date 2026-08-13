@@ -20,7 +20,10 @@ export function validateOrder(playerId, originPlanet, destinationPlanet, shipCou
   if (originPlanet.ownerId !== playerId) {
     return 'You do not own the source planet.';
   }
-  if (!Number.isInteger(shipCount) || shipCount <= 0) {
+  if (!Number.isInteger(shipCount)) {
+    return 'Enter a whole number of ships.';
+  }
+  if (shipCount <= 0) {
     return 'Enter a ship count greater than zero.';
   }
   if (shipCount > availableShips(playerId, originPlanet)) {

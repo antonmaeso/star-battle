@@ -16,3 +16,12 @@ const CANVAS_DIAGONAL = Math.hypot(CANVAS_WIDTH, CANVAS_HEIGHT);
 // generation (M5) instead of this fixed hardcoded layout.
 export const ONE_TURN_MAX_DISTANCE = CANVAS_DIAGONAL * 0.25;
 export const TWO_TURN_MAX_DISTANCE = CANVAS_DIAGONAL * 0.55;
+
+// Battle-phase (dodge-duel) tuning.
+export const PADDLE_MARGIN = 40;
+export const PADDLE_WIDTH = 14;
+export const PADDLE_HEIGHT = 70;
+export const PADDLE_SPEED = 320; // px/second
+export const PROJECTILE_RADIUS = 5;
+export const PROJECTILE_SPEED = 520; // px/second
+export const FIRE_COOLDOWN_MS = 300;

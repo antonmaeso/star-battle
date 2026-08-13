@@ -7,6 +7,13 @@ function ownerColor(planet, players) {
   return owner ? owner.color : NEUTRAL_COLOR;
 }
 
+function drawCircle(context, x, y, radius, color) {
+  context.beginPath();
+  context.arc(x, y, radius, 0, Math.PI * 2);
+  context.fillStyle = color;
+  context.fill();
+}
+
 export function createPlanetSprite(planet, players, selection) {
   return Sprite({
     x: planet.x,
@@ -16,10 +23,7 @@ export function createPlanetSprite(planet, players, selection) {
     render() {
       const { context } = this;
 
-      context.beginPath();
-      context.arc(0, 0, this.planet.radius, 0, Math.PI * 2);
-      context.fillStyle = ownerColor(this.planet, players);
-      context.fill();
+      drawCircle(context, 0, 0, this.planet.radius, ownerColor(this.planet, players));
 
       if (selection?.originPlanetId === this.planet.id) {
         context.lineWidth = 3;
@@ -50,14 +54,17 @@ export function drawFleets(context, fleets, viewerPlayerId, players) {
   fleets
     .filter((fleet) => fleet.ownerId === viewerPlayerId)
     .forEach((fleet) => {
-      const progress = 1 - fleet.turnsRemaining / fleet.totalTravelTurns;
+      // Render at the midpoint of the fleet's *current* remaining turn, not
+      // the start of it — turnsRemaining only changes once per round, so
+      // rendering at the segment boundary would place a freshly-departed (or
+      // 1-turn) fleet exactly on top of its origin planet for its entire
+      // first round, making it visually indistinguishable from "not sent".
+      const elapsedTurns = fleet.totalTravelTurns - fleet.turnsRemaining + 0.5;
+      const progress = elapsedTurns / fleet.totalTravelTurns;
       const x = fleet.originX + (fleet.destX - fleet.originX) * progress;
       const y = fleet.originY + (fleet.destY - fleet.originY) * progress;
       const owner = players.find((player) => player.id === fleet.ownerId);
 
-      context.beginPath();
-      context.arc(x, y, 6, 0, Math.PI * 2);
-      context.fillStyle = owner ? owner.color : '#ffffff';
-      context.fill();
+      drawCircle(context, x, y, 6, owner ? owner.color : '#ffffff');
     });
 }

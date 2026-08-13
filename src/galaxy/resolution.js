@@ -1,45 +1,37 @@
 import { createFleetFromOrder } from './fleet.js';
 import { applyProduction } from './production.js';
 
-// Temporary stand-in for the real-time duel (arrives in M4): whichever side
-// brought more ships wins outright, surviving with the difference.
-function resolveContestedStub(p1Ships, p2Ships) {
-  if (p1Ships === p2Ships) {
-    const winnerId = Math.random() < 0.5 ? 'p1' : 'p2';
-    return { winnerId, survivingShips: 1 };
-  }
-  const winnerId = p1Ships > p2Ships ? 'p1' : 'p2';
-  const survivingShips = Math.abs(p1Ships - p2Ships);
-  return { winnerId, survivingShips };
-}
-
-export function resolveRound(world, ordersByPlayer) {
-  const planetsById = new Map(world.planets.map((planet) => [planet.id, planet]));
-
-  // 1. Advance fleets already in transit before this round's new orders exist,
-  // so a freshly-committed 1-turn fleet isn't double-decremented.
+// Runs once per round, at the first player's lock-in, before any new orders
+// this round are committed — so a freshly-committed fleet isn't
+// double-decremented the same round it departs.
+export function advanceFleets(world) {
   world.fleets.forEach((fleet) => {
     fleet.turnsRemaining -= 1;
   });
+}
 
-  // 2. Commit this round's locked-in orders as new fleets; ships leave the
-  // origin planet immediately so they can't be double-spent across orders.
-  for (const playerId of ['p1', 'p2']) {
-    for (const order of ordersByPlayer[playerId]) {
-      const origin = planetsById.get(order.originPlanetId);
-      origin.ships -= order.shipCount;
-      world.fleets.push(createFleetFromOrder(order, playerId, planetsById));
-    }
-  }
+// Runs at each player's own lock-in: their ships leave the origin planet and
+// become an in-transit fleet immediately, rather than waiting for both
+// players to lock in.
+export function commitOrders(world, playerId, orders) {
+  const planetsById = new Map(world.planets.map((planet) => [planet.id, planet]));
+  orders.forEach((order) => {
+    const origin = planetsById.get(order.originPlanetId);
+    origin.ships -= order.shipCount;
+    world.fleets.push(createFleetFromOrder(order, playerId, planetsById));
+  });
+}
 
-  // 3. Apply production to owned planets.
+// Runs once per round, after both players have locked in (and therefore
+// committed their orders): production, then arrivals/ownership/battles.
+export function resolveArrivals(world) {
+  const planetsById = new Map(world.planets.map((planet) => [planet.id, planet]));
+
   applyProduction(world.planets);
 
-  // 4. Partition arrivals from fleets still traveling.
   const arrived = world.fleets.filter((fleet) => fleet.turnsRemaining <= 0);
   world.fleets = world.fleets.filter((fleet) => fleet.turnsRemaining > 0);
 
-  // 5. Group arrivals by destination planet and resolve ownership.
   const arrivalsByPlanet = new Map();
   arrived.forEach((fleet) => {
     const list = arrivalsByPlanet.get(fleet.destinationPlanetId) ?? [];
@@ -61,12 +53,10 @@ export function resolveRound(world, ordersByPlayer) {
     const p2Total = (planet.ownerId === 'p2' ? planet.ships : 0) + arrivingP2;
 
     if (p1Total > 0 && p2Total > 0) {
+      // Ownership stays undetermined until the real-time duel resolves it
+      // (see battle/battleLoop.js and main.js's battle queue).
       battlesTriggered.push({ planetId, p1Ships: p1Total, p2Ships: p2Total });
       planet.pendingBattle = true;
-      const { winnerId, survivingShips } = resolveContestedStub(p1Total, p2Total);
-      planet.ownerId = winnerId;
-      planet.ships = survivingShips;
-      planet.pendingBattle = false;
     } else if (p1Total > 0) {
       planet.ownerId = 'p1';
       planet.ships = p1Total;

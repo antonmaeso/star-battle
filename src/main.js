@@ -8,7 +8,8 @@ import { createGalaxyInput } from './galaxy/galaxyInput.js';
 import { createOrderPanel } from './ui/overlays/orderPanel.js';
 import { createPassOverlay } from './ui/overlays/passDevice.js';
 import { createStateMachine, PHASE } from './state/stateMachine.js';
-import { resolveRound } from './galaxy/resolution.js';
+import { advanceFleets, commitOrders, resolveArrivals } from './galaxy/resolution.js';
+import { createBattleDuel } from './battle/battleLoop.js';
 
 const { canvas, context } = init('game-canvas');
 const gameRoot = document.getElementById('game-root');
@@ -77,9 +78,18 @@ const orderPanel = createOrderPanel({
   },
   onLockIn() {
     galaxyInput.reset();
-    if (stateMachine.getPhase() === PHASE.ORDERS_P1) {
+    const phase = stateMachine.getPhase();
+    if (phase === PHASE.ORDERS_P1) {
+      // Advance in-transit fleets once at the top of the round, before this
+      // round's own orders are committed, so a freshly-departed fleet isn't
+      // double-decremented the same round it leaves.
+      advanceFleets(world);
+      commitOrders(world, 'p1', getOrders('p1'));
+      clearOrders('p1');
       stateMachine.lockInP1();
-    } else if (stateMachine.getPhase() === PHASE.ORDERS_P2) {
+    } else if (phase === PHASE.ORDERS_P2) {
+      commitOrders(world, 'p2', getOrders('p2'));
+      clearOrders('p2');
       stateMachine.lockInP2();
     }
   },
@@ -100,6 +110,7 @@ function refreshQueue() {
 }
 
 const galaxyInput = createGalaxyInput(canvas, world.planets, {
+  getActivePlayerId: () => activePlayerId,
   onSelectionChange(nextSelection) {
     Object.assign(selection, nextSelection);
 
@@ -117,37 +128,75 @@ const galaxyInput = createGalaxyInput(canvas, world.planets, {
   },
 });
 
+let battleQueue = [];
+let activeBattle = null;
+
 function handlePhaseChange(phase) {
   if (phase === PHASE.ORDERS_P1 || phase === PHASE.ORDERS_P2) {
     gameRoot.inert = false;
+    orderPanel.root.hidden = false;
     activePlayerId = phase === PHASE.ORDERS_P1 ? 'p1' : 'p2';
     passOverlay.hide();
     galaxyInput.reset();
     orderPanel.hideDraft();
     orderPanel.setHeader(playerNames[activePlayerId], world.round);
     refreshQueue();
+    galaxyLoop.start();
   } else if (phase === PHASE.PASS_TO_P2) {
     gameRoot.inert = true;
     passOverlay.show(playerNames.p2);
   } else if (phase === PHASE.RESOLVING) {
     gameRoot.inert = true;
     runResolution();
+  } else if (phase === PHASE.BATTLE_ACTIVE) {
+    gameRoot.inert = true;
+    orderPanel.root.hidden = true;
+    galaxyLoop.stop();
+    startNextBattle();
   }
 }
 
 function runResolution() {
-  const ordersByPlayer = { p1: getOrders('p1').slice(), p2: getOrders('p2').slice() };
-  resolveRound(world, ordersByPlayer);
-  clearOrders('p1');
-  clearOrders('p2');
-  world.round += 1;
-  stateMachine.finishResolving();
+  const battlesTriggered = resolveArrivals(world);
+
+  if (battlesTriggered.length > 0) {
+    battleQueue = battlesTriggered;
+    stateMachine.startBattle();
+  } else {
+    world.round += 1;
+    stateMachine.finishResolving();
+  }
+}
+
+function startNextBattle() {
+  const battle = battleQueue.shift();
+  activeBattle = createBattleDuel({
+    context,
+    p1Ships: battle.p1Ships,
+    p2Ships: battle.p2Ships,
+    onResolved({ winnerId, survivingShips }) {
+      const planet = planetsById.get(battle.planetId);
+      planet.ownerId = winnerId;
+      planet.ships = survivingShips;
+      planet.pendingBattle = false;
+      activeBattle = null;
+
+      if (battleQueue.length > 0) {
+        startNextBattle();
+      } else {
+        world.round += 1;
+        stateMachine.finishResolving();
+      }
+    },
+  });
+  activeBattle.start();
 }
 
 orderPanel.setHeader(playerNames.p1, world.round);
 refreshQueue();
 
-const loop = GameLoop({
+const galaxyLoop = GameLoop({
+  context,
   update() {
     planetSprites.forEach((sprite) => sprite.update());
   },
@@ -157,8 +206,14 @@ const loop = GameLoop({
   },
 });
 
-loop.start();
+galaxyLoop.start();
 
 if (import.meta.env.DEV) {
-  window.__game = { world, stateMachine, PHASE };
+  window.__game = {
+    world,
+    stateMachine,
+    PHASE,
+    getBattleQueue: () => battleQueue,
+    getActiveBattle: () => activeBattle,
+  };
 }

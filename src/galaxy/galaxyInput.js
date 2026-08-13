@@ -1,4 +1,4 @@
-export function createGalaxyInput(canvas, planets, { onSelectionChange }) {
+export function createGalaxyInput(canvas, planets, { onSelectionChange, getActivePlayerId }) {
   let originPlanetId = null;
   let destinationPlanetId = null;
 
@@ -36,6 +36,9 @@ export function createGalaxyInput(canvas, planets, { onSelectionChange }) {
     }
 
     if (!originPlanetId) {
+      // Only your own planets can start a route — clicking an enemy or
+      // neutral planet first is treated as a no-op, not a selection.
+      if (clicked.ownerId !== getActivePlayerId()) return;
       selectOrigin(clicked.id);
       return;
     }
