@@ -67,6 +67,21 @@ function drawHomeworldRing(context, radius, color) {
   context.restore();
 }
 
+function drawSelectionRing(context, radius, { color, lineWidth, dashed = false, glow = false }) {
+  context.save();
+  context.lineWidth = lineWidth;
+  context.strokeStyle = color;
+  if (glow) {
+    context.shadowColor = color;
+    context.shadowBlur = 10;
+  }
+  if (dashed) context.setLineDash([4, 4]);
+  context.beginPath();
+  context.arc(0, 0, radius + 4, 0, Math.PI * 2);
+  context.stroke();
+  context.restore();
+}
+
 function roundRect(context, x, y, width, height, radius) {
   context.beginPath();
   context.moveTo(x + radius, y);
@@ -122,24 +137,9 @@ export function createPlanetSprite(planet, players, selection, getViewerPlayerId
       }
 
       if (selection?.originPlanetId === this.planet.id) {
-        context.save();
-        context.lineWidth = 2.5;
-        context.strokeStyle = '#ffe066';
-        context.shadowColor = '#ffe066';
-        context.shadowBlur = 10;
-        context.beginPath();
-        context.arc(0, 0, radius + 4, 0, Math.PI * 2);
-        context.stroke();
-        context.restore();
+        drawSelectionRing(context, radius, { color: '#ffe066', lineWidth: 2.5, glow: true });
       } else if (selection?.destinationPlanetId === this.planet.id) {
-        context.save();
-        context.lineWidth = 2;
-        context.strokeStyle = '#ffffff';
-        context.setLineDash([4, 4]);
-        context.beginPath();
-        context.arc(0, 0, radius + 4, 0, Math.PI * 2);
-        context.stroke();
-        context.restore();
+        drawSelectionRing(context, radius, { color: '#ffffff', lineWidth: 2, dashed: true });
       }
 
       drawShipCountBadge(context, radius, this.planet.ships);

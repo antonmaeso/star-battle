@@ -8,8 +8,10 @@ import { createGalaxyInput } from './galaxy/galaxyInput.js';
 import { distanceBetween, turnsForDistance } from './galaxy/distance.js';
 import { createOrderPanel } from './ui/overlays/orderPanel.js';
 import { createPassOverlay } from './ui/overlays/passDevice.js';
+import { createGameOverOverlay } from './ui/overlays/gameOver.js';
 import { createStateMachine, PHASE } from './state/stateMachine.js';
 import { advanceFleets, commitOrders, resolveArrivals } from './galaxy/resolution.js';
+import { checkGameOver } from './galaxy/winCondition.js';
 import { createBattleDuel } from './battle/battleLoop.js';
 import { createStarfield } from './core/starfield.js';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from './core/constants.js';
@@ -109,6 +111,9 @@ const passOverlay = createPassOverlay({
 
 document.body.appendChild(passOverlay.root);
 
+const gameOverOverlay = createGameOverOverlay();
+document.body.appendChild(gameOverOverlay.root);
+
 function refreshQueue() {
   orderPanel.renderQueue(getOrders(activePlayerId));
 }
@@ -158,7 +163,26 @@ function handlePhaseChange(phase) {
     orderPanel.root.hidden = true;
     galaxyLoop.stop();
     startNextBattle();
+  } else if (phase === PHASE.GAME_OVER) {
+    gameRoot.inert = true;
+    orderPanel.root.hidden = true;
+    galaxyLoop.stop();
   }
+}
+
+// Called once a round's arrivals/battles are fully resolved: checks for a
+// winner before advancing, so the game stops rather than looping back to
+// ORDERS_P1 for a player with nothing left to command.
+function finishRound() {
+  const result = checkGameOver(world, players);
+  if (result.over) {
+    const winner = result.winnerId ? players.find((player) => player.id === result.winnerId) : null;
+    gameOverOverlay.show(winner ? winner.name : null);
+    stateMachine.declareGameOver();
+    return;
+  }
+  world.round += 1;
+  stateMachine.finishResolving();
 }
 
 function runResolution() {
@@ -168,8 +192,7 @@ function runResolution() {
     battleQueue = battlesTriggered;
     stateMachine.startBattle();
   } else {
-    world.round += 1;
-    stateMachine.finishResolving();
+    finishRound();
   }
 }
 
@@ -190,8 +213,7 @@ function startNextBattle() {
       if (battleQueue.length > 0) {
         startNextBattle();
       } else {
-        world.round += 1;
-        stateMachine.finishResolving();
+        finishRound();
       }
     },
   });

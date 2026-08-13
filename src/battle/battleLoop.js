@@ -5,6 +5,7 @@ import {
   PADDLE_MARGIN,
   PADDLE_SPEED,
   PLAYER_COLORS,
+  POWER_ADVANTAGE_MAX,
   PROJECTILE_RADIUS,
   PROJECTILE_SPEED,
 } from '../core/constants.js';
@@ -23,10 +24,23 @@ function ensureKeys() {
 // side's lives. Whoever's count hits zero first loses; the survivor's
 // remaining ships become the planet's new garrison (see resolveRound's
 // Case B in galaxy/resolution.js and the caller's onResolved handler).
+// A ship-count advantage translates into a firing-rate edge (not just extra
+// lives), so a numerically superior fleet feels stronger in the fight
+// itself: the side that brought more ships fires faster, up to
+// POWER_ADVANTAGE_MAX at a full advantage, and the outnumbered side fires
+// correspondingly slower. Fixed for the duration of the duel, based on the
+// ship counts the fleets arrived with.
+function fireCooldownFor(myShips, theirShips) {
+  const advantage = (myShips / (myShips + theirShips) - 0.5) * 2;
+  return FIRE_COOLDOWN_MS * (1 - advantage * POWER_ADVANTAGE_MAX);
+}
+
 export function createBattleDuel({ context, p1Ships, p2Ships, onResolved, starfield }) {
   ensureKeys();
 
   const state = { shipsP1: p1Ships, shipsP2: p2Ships };
+  const fireCooldownP1 = fireCooldownFor(p1Ships, p2Ships);
+  const fireCooldownP2 = fireCooldownFor(p2Ships, p1Ships);
   const paddleP1 = createPaddle(PADDLE_MARGIN);
   const paddleP2 = createPaddle(CANVAS_WIDTH - PADDLE_MARGIN);
   let projectiles = [];
@@ -38,7 +52,7 @@ export function createBattleDuel({ context, p1Ships, p2Ships, onResolved, starfi
     if (resolved) return;
     const now = performance.now();
     if (owner === 'p1') {
-      if (now - lastFireP1 < FIRE_COOLDOWN_MS) return;
+      if (now - lastFireP1 < fireCooldownP1) return;
       lastFireP1 = now;
       projectiles.push({
         owner,
@@ -48,7 +62,7 @@ export function createBattleDuel({ context, p1Ships, p2Ships, onResolved, starfi
         radius: PROJECTILE_RADIUS,
       });
     } else {
-      if (now - lastFireP2 < FIRE_COOLDOWN_MS) return;
+      if (now - lastFireP2 < fireCooldownP2) return;
       lastFireP2 = now;
       projectiles.push({
         owner,

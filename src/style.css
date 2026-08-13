@@ -213,6 +213,12 @@ body {
   margin: 0 0 16px;
 }
 
+.game-over-message {
+  font-size: 32px;
+  color: var(--accent);
+  text-shadow: 0 0 20px var(--accent-border);
+}
+
 .pass-overlay-ready {
   padding: 10px 20px;
   font-size: 16px;

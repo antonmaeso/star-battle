@@ -4,6 +4,7 @@ export const PHASE = {
   ORDERS_P2: 'ORDERS_P2',
   RESOLVING: 'RESOLVING',
   BATTLE_ACTIVE: 'BATTLE_ACTIVE',
+  GAME_OVER: 'GAME_OVER',
 };
 
 export function createStateMachine(onChange) {
@@ -21,5 +22,6 @@ export function createStateMachine(onChange) {
     lockInP2: () => set(PHASE.RESOLVING),
     startBattle: () => set(PHASE.BATTLE_ACTIVE),
     finishResolving: () => set(PHASE.ORDERS_P1),
+    declareGameOver: () => set(PHASE.GAME_OVER),
   };
 }

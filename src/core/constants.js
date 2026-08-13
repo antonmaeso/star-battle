@@ -28,3 +28,7 @@ export const PADDLE_SPEED = 320; // px/second
 export const PROJECTILE_RADIUS = 5;
 export const PROJECTILE_SPEED = 520; // px/second
 export const FIRE_COOLDOWN_MS = 300;
+// The side that brought more ships into the fight fires faster — up to this
+// fraction faster/slower at a full ships advantage (e.g. one side present,
+// the other wiped out before the duel even starts).
+export const POWER_ADVANTAGE_MAX = 0.4;
