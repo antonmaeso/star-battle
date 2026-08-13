@@ -31,7 +31,9 @@ opponent's — followed by an automatic resolution step.
 - **Click a different planet** to select it as the destination. It
   gets a white outline.
 - Once both an origin and a destination are selected, an order panel
-  opens on the right side of the screen:
+  opens on the right side of the screen. It shows the route (origin →
+  destination) along with how many rounds the fleet will take to
+  arrive, so you know the travel time before you commit:
   - Enter the number of ships you want to send in the "Ships to send"
     field.
   - Click **Queue Order** to add the order to your list of queued
@@ -94,10 +96,15 @@ opponent's — followed by an automatic resolution step.
 ## Rules
 
 - Planets are shown in different colors depending on who owns them —
-  your planets are one color, your opponent's are another, and
-  unowned (neutral) planets are a third color. The number displayed on
-  each planet is how many ships are currently there. Planet ownership
-  and ship counts are always visible to both players.
+  your own planets are shown in your color, and unowned (neutral)
+  planets are shown in a third color. The number displayed on each
+  planet is how many ships are currently there, and that ship count is
+  always visible for every planet, including your opponent's.
+- Fog of war hides your opponent's true ownership color: any planet
+  they own appears in a distinct, obscured "fogged" color instead of
+  their player color, so you can tell it isn't neutral or yours but
+  not read their color directly off the map. Ownership only becomes
+  fully visible again once you capture that planet yourself.
 - You can only queue an order from a planet you own.
 - The number of ships you send must be a whole number greater than
   zero.
